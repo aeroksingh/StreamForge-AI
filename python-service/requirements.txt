@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+yt-dlp
+redis
+python-dotenv
+pydantic
+aiofiles
