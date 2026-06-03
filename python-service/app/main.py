@@ -1,20 +1,24 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
 from app.routes import extract, download
+from app.utils.file_helper import ensure_dirs
+from app.services.redis_service import ping
 
-load_dotenv()  # loads .env file
+load_dotenv()
+ensure_dirs()
 
 app = FastAPI(
     title="YT Downloader — Python Service",
-    description="Handles stream extraction, download, and FFmpeg merge.",
     version="1.0.0",
 )
 
-# Register routes
 app.include_router(extract.router,  tags=["Extract"])
 app.include_router(download.router, tags=["Download"])
 
 
 @app.get("/health", tags=["Health"])
 def health():
-    return {"status": "ok", "service": "python-service"}
+    return {
+        "status": "ok",
+        "redis": "connected" if ping() else "disconnected"
+    }
