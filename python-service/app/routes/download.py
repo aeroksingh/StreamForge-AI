@@ -32,20 +32,26 @@ def run_download_job(req: DownloadRequest):
     final_path = final_output_path(req.job_id)
 
     try:
-        set_status(req.job_id, "downloading", f"Downloading video stream (itag {req.video_itag})")
-        download_stream(req.url, req.video_itag, video_path)
+        # video download with live progress
+        set_status(req.job_id, "downloading", "Starting video download...")
+        download_stream(
+            req.url, req.video_itag, video_path,
+            job_id=req.job_id, label="Video"
+        )
 
-        set_status(req.job_id, "downloading", f"Downloading audio stream (itag {req.audio_itag})")
-        download_stream(req.url, req.audio_itag, audio_path)
+        # audio download with live progress
+        set_status(req.job_id, "downloading", "Starting audio download...")
+        download_stream(
+            req.url, req.audio_itag, audio_path,
+            job_id=req.job_id, label="Audio"
+        )
 
-        set_status(req.job_id, "merging", "Merging with FFmpeg")
+        set_status(req.job_id, "merging", "Merging video + audio...")
         merge(video_path, audio_path, final_path)
 
         size = file_size_mb(final_path)
-        set_status(req.job_id, "done", f"File ready — {size} MB")
-        print(f"[job {req.job_id}] done → {final_path}")
+        set_status(req.job_id, "done", f"Ready — {size} MB")
 
     except Exception as e:
         cleanup_job_temp(req.job_id)
         set_status(req.job_id, "error", str(e))
-        print(f"[job {req.job_id}] error → {e}")

@@ -21,3 +21,90 @@ node_modules/
 # OS
 .DS_Store
 Thumbs.db
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE Files
+# =========================
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+
+# =========================
+# Java / Spring Boot
+# =========================
+spring-backend/backend/target/
+spring-backend/backend/.mvn/wrapper/maven-wrapper.jar
+
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# =========================
+# Python
+# =========================
+python-service/venv/
+python-service/__pycache__/
+python-service/**/*.pyc
+python-service/**/*.pyo
+python-service/**/*.pyd
+
+*.pyc
+*.pyo
+*.pyd
+
+# Environment files
+python-service/.env
+.env
+
+# =========================
+# Downloads & Temporary Files
+# =========================
+python-service/downloads/*
+!python-service/downloads/.gitkeep
+
+python-service/temp/*
+!python-service/temp/.gitkeep
+
+# =========================
+# Node (future-proof)
+# =========================
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# =========================
+# Docker
+# =========================
+docker-data/
+*.pid
+
+# =========================
+# Secrets
+# =========================
+.env
+.env.*
+application-local.yml
+application-prod.yml
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# Chrome Extension
+# =========================
+extension/dist/
+extension/build/
