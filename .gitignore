@@ -108,3 +108,57 @@ logs/
 # =========================
 extension/dist/
 extension/build/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+python-service/venv/
+python-service/__pycache__/
+python-service/app/__pycache__/
+python-service/app/routes/__pycache__/
+python-service/app/services/__pycache__/
+python-service/app/models/__pycache__/
+python-service/app/utils/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ── Downloaded files (can be huge) ───────────────────────────────────────────
+python-service/downloads/
+python-service/temp/
+
+# ── Environment / secrets ─────────────────────────────────────────────────────
+.env
+*.env
+.env.local
+.env.production
+
+# ── Java / Spring Boot ────────────────────────────────────────────────────────
+spring-backend/target/
+spring-backend/.mvn/
+*.class
+*.jar
+*.war
+*.ear
+.classpath
+.project
+.settings/
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+docker-data/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/

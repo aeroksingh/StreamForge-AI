@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>StreamForge</title>
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    width: 340px;
+    background: #fff;
+    color: #111;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+  }
+
+  .hidden { display: none !important; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid #eee;
+  }
+  .brand { font-size: 13px; font-weight: 700; color: #111; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #ddd; }
+  .dot.up   { background: #22c55e; }
+  .dot.down { background: #ef4444; }
+
+  .url {
+    padding: 6px 14px;
+    font-size: 10px;
+    color: #aaa;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fafafa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .body { padding: 12px 14px 14px; }
+
+  .btn {
+    width: 100%;
+    padding: 10px;
+    background: #22c55e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn:hover    { background: #16a34a; }
+  .btn:disabled { background: #d1d5db; cursor: default; }
+
+  .lbl {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #bbb;
+    margin: 12px 0 6px;
+  }
+
+  .qlist {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .qi {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: #f9f9f9;
+    border: 1.5px solid #eee;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .qi:hover { border-color: #22c55e; }
+  .qi.sel   { border-color: #22c55e; background: #f0fdf4; }
+  .qi-q { font-weight: 700; font-size: 14px; }
+  .qi-m { font-size: 11px; color: #aaa; }
+
+  select {
+    width: 100%;
+    background: #f9f9f9;
+    border: 1.5px solid #eee;
+    border-radius: 6px;
+    color: #111;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+    margin-bottom: 12px;
+  }
+
+  /* ── Progress screen ── */
+  .prog-wrap { padding: 14px; }
+
+  .prog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+
+  .prog-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  /* big percent */
+  .prog-pct {
+    font-size: 38px;
+    font-weight: 800;
+    color: #111;
+    line-height: 1;
+    letter-spacing: -.02em;
+  }
+
+  /* ETA */
+  .prog-eta {
+    font-size: 13px;
+    color: #22c55e;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  /* stream name */
+  .prog-stream {
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 4px;
+    margin-bottom: 10px;
+  }
+
+  .bar-wrap { height: 4px; background: #f0f0f0; border-radius: 2px; margin-bottom: 10px; }
+  .bar-fill { height: 100%; background: #22c55e; width: 0%; transition: width .4s; border-radius: 2px; }
+
+  .prog-speed {
+    font-size: 11px;
+    color: #ccc;
+    text-align: right;
+  }
+
+  .msg-done {
+    padding: 10px;
+    background: #f0fdf4;
+    border: 1.5px solid #bbf7d0;
+    border-radius: 6px;
+    color: #16a34a;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .dl {
+    display: block;
+    padding: 11px;
+    background: #22c55e;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background .15s;
+  }
+  .dl:hover { background: #16a34a; }
+
+  .err {
+    margin: 0 14px 10px;
+    padding: 8px 10px;
+    background: #fef2f2;
+    border: 1.5px solid #fecaca;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #dc2626;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="brand">StreamForge AI</span>
+  <span class="dot" id="dot"></span>
+</header>
+
+<div class="url" id="url">detecting...</div>
+
+<!-- S1: extract -->
+<div class="body" id="s1">
+  <button class="btn" id="btn-ex">Get Qualities</button>
+</div>
+
+<!-- S2: pick quality -->
+<div class="body hidden" id="s2">
+  <div class="lbl">Video Quality</div>
+  <div class="qlist" id="qlist"></div>
+  <div class="lbl">Audio</div>
+  <select id="asel"></select>
+  <button class="btn" id="btn-dl">Download</button>
+</div>
+
+<!-- S3: progress -->
+<div class="prog-wrap hidden" id="s3">
+  <div class="prog-header">
+    <div>
+      <div class="prog-label" id="prog-label">Downloading</div>
+      <div class="prog-pct" id="prog-pct">0%</div>
+      <div class="prog-eta" id="prog-eta">calculating...</div>
+      <div class="prog-stream" id="prog-stream">starting...</div>
+    </div>
+  </div>
+  <div class="bar-wrap"><div class="bar-fill" id="bar"></div></div>
+  <div class="prog-speed" id="prog-speed"></div>
+  <div id="dlwrap"></div>
+</div>
+
+<div class="err hidden" id="err"></div>
+
+<script src="popup.js"></script>
+</body>
+</html>
