@@ -29,7 +29,9 @@ QUEUE_NAME   = "download_queue"
 TEMP_DIR     = os.getenv("TEMP_DIR", "temp")
 DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", "downloads")
 
-client = redis.from_url(REDIS_URL, decode_responses=True)
+# client = redis.from_url(REDIS_URL, decode_responses=True)
+
+client = redis.from_url(REDIS_URL, decode_responses=True, socket_timeout=30, socket_connect_timeout=10)
 
 os.makedirs(TEMP_DIR, exist_ok=True)
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)

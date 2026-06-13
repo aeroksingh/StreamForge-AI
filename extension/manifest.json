@@ -21,8 +21,14 @@
 
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "StreamForge AI"
-  },
+    "default_title": "StreamForge AI",
+    "default_icon": {
+      "16":  "icons/icon16.png",
+      "48":  "icons/icon48.png",
+      "128": "icons/icon128.png"
+
+  }
+},
 
   "content_scripts": [
     {
@@ -31,8 +37,14 @@
       "run_at": "document_idle"
     }
   ],
+  "icons": {
+  "16":  "icons/icon16.png",
+  "48":  "icons/icon48.png",
+  "128": "icons/icon128.png"
+},
 
   "background": {
     "service_worker": "background/background.js"
   }
+  
 }

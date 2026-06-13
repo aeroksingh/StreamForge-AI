@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-dl').onclick = doDownload
 })
 
-// ── URL detection ─────────────────────────────────────────────────────────────
 async function getUrl() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
   if (tab?.url?.includes('watch?v=')) {
@@ -26,29 +25,23 @@ async function getUrl() {
   }
 }
 
-// ── Health check ──────────────────────────────────────────────────────────────
 async function checkHealth() {
   let pythonOk = false
   let springOk = false
-
   try {
     const r = await fetch(`${PYTHON}/health`)
     const d = await r.json()
     pythonOk = d.status === 'ok'
   } catch {}
-
   try {
     const r = await fetch(`${SPRING}/api/health`)
     springOk = r.ok
   } catch {}
-
-  // Green only if both up, yellow if python only, red if both down
   const dot = document.getElementById('dot')
   dot.className = 'dot ' + (pythonOk && springOk ? 'up' : pythonOk ? 'warn' : 'down')
   dot.title = `Python: ${pythonOk ? '✓' : '✗'}  Spring: ${springOk ? '✓' : '✗'}`
 }
 
-// ── Extract formats ───────────────────────────────────────────────────────────
 async function doExtract() {
   btn('btn-ex', 'Loading...', true)
   hideErr()
@@ -68,7 +61,6 @@ async function doExtract() {
   }
 }
 
-// ── Render quality cards ──────────────────────────────────────────────────────
 function renderFormats(d) {
   const qlist = document.getElementById('qlist')
   const asel  = document.getElementById('asel')
@@ -80,7 +72,6 @@ function renderFormats(d) {
   d.formats.filter(f => f.type === 'video').forEach(f => {
     if (!seen[f.quality] || f.ext === 'mp4') seen[f.quality] = f
   })
-
   const sorted = order.map(q => seen[q]).filter(Boolean)
   d.formats.filter(f => f.type === 'combined').forEach(f => sorted.push(f))
 
@@ -114,14 +105,13 @@ function renderFormats(d) {
   asel.onchange = () => { aItag = asel.value }
 }
 
-// ── Start download via Spring Boot ────────────────────────────────────────────
 async function doDownload() {
   if (!vItag) return showErr('Select a video quality first')
   if (!aItag) return showErr('Select an audio track')
 
   const qualityLabel = document.querySelector('.qi.sel')?.dataset.quality || vItag
   show('s3'); hide('s2'); hideErr()
-  updateProgress('downloading', '0%', 'sending to Spring Boot...', '', 0)
+  updateProgress('downloading', '0%', 'sending to backend...', '', 0)
 
   try {
     const r = await fetch(`${SPRING}/api/download/start`, {
@@ -144,6 +134,7 @@ async function doDownload() {
     const d = await r.json()
     const jobId = d.jobId
     chrome.storage.local.set({ activeJob: jobId })
+    chrome.runtime.sendMessage({ type: 'TRACK_JOB', jobId })
     pollSpring(jobId)
 
   } catch (e) {
@@ -151,30 +142,22 @@ async function doDownload() {
   }
 }
 
-// ── Poll Spring Boot status ───────────────────────────────────────────────────
 function pollSpring(jobId) {
   const pctMap = {
-    pending:     5,
-    queued:      10,
-    extracting:  15,
-    downloading: 55,
-    merging:     85,
-    completed:   100,
-    failed:      0,
-    error:       0,
+    pending: 5, queued: 10, extracting: 15,
+    downloading: 55, merging: 85, completed: 100,
+    failed: 0, error: 0,
   }
 
   const t = setInterval(async () => {
     try {
       const r = await fetch(`${SPRING}/api/download/status/${jobId}`)
       const d = await r.json()
-
       const status  = (d.status || '').toLowerCase()
       const pct     = pctMap[status] ?? 20
       const message = d.message || d.errorMessage || status
 
       if (status === 'downloading') {
-        // Parse yt-dlp style message for ETA/speed
         const p     = (message.match(/(\d+\.\d+)%/) || [])[1]
         const speed = (message.match(/at\s+([^\s]+)/) || [])[1]
         const eta   = (message.match(/ETA\s+([^\s]+)/) || [])[1]
@@ -186,12 +169,10 @@ function pollSpring(jobId) {
 
       } else if (status === 'completed') {
         clearInterval(t)
-        chrome.runtime.sendMessage({ type: 'DOWNLOAD_DONE' })
         chrome.storage.local.remove('activeJob')
         updateProgress('done', '100%', 'complete!', '', 100, 'Done')
 
-        // File served via Spring Boot
-        const fileUrl = `${SPRING}/api/download/file/${jobId}`
+        const fileUrl = `${PYTHON}/files/${jobId}_final.mp4`
         chrome.downloads.download({
           url:      fileUrl,
           filename: `streamforge_${jobId}.mp4`,
@@ -200,28 +181,22 @@ function pollSpring(jobId) {
 
         document.getElementById('dlwrap').innerHTML = `
           <div class="msg-done">✓ Download complete</div>
-          <button class="dl" onclick="
-            chrome.downloads.download({
-              url:'${fileUrl}',
-              filename:'streamforge_${jobId}.mp4',
-              saveAs:true
-            })">↓ Save Again</button>`
+          <button class="dl" onclick="chrome.downloads.download({
+            url: '${fileUrl}',
+            filename: 'streamforge_${jobId}.mp4',
+            saveAs: true
+          })">↓ Save Again</button>`
 
       } else if (status === 'failed' || status === 'error') {
         clearInterval(t)
         showErr(message)
-
       } else {
         updateProgress(status, pct+'%', message, '', pct, status)
       }
-
-    } catch (e) {
-      // network hiccup — retry next tick silently
-    }
+    } catch {}
   }, 1500)
 }
 
-// ── UI helpers ────────────────────────────────────────────────────────────────
 function updateProgress(status, pct, eta, speed, pctNum, stream = '') {
   document.getElementById('prog-label').textContent =
     status === 'merging'    ? 'Merging'    :
