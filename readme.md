@@ -43,18 +43,18 @@ Chrome Extension
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   Chrome Extension                       │
+│                   Chrome Extension                      │
 │         Manifest V3 · content.js · popup.js             │
 │         background.js (badge + notifications)           │
 └──────────────────────┬──────────────────────────────────┘
                        │ HTTP REST
 ┌──────────────────────▼──────────────────────────────────┐
-│              Spring Boot Backend :8080                   │
+│              Spring Boot Backend :8080                  │
 │   REST API · Job Orchestration · WebSocket · Security   │
 │         PostgreSQL (JPA/Hibernate) · Redis pub/sub      │
 └────────────┬─────────────────────────────┬──────────────┘
              │ Redis Queue                 │ WebSocket
-┌────────────▼────────────┐   ┌────────────▼─────────────┐
+┌────────────▼────────────┐   ┌────────────▼──────────────┐
 │   Python Microservice   │   │     Chrome Extension      │
 │      FastAPI :8001      │   │   (progress updates)      │
 │  yt-dlp · FFmpeg        │   └──────────────────────────-┘
@@ -63,8 +63,8 @@ Chrome Extension
              │
 ┌────────────▼────────────┐
 │   Docker Containers     │
-│  PostgreSQL :5432        │
-│  Redis :6379             │
+│  PostgreSQL :5432       │
+│  Redis :6379            │
 └─────────────────────────┘
 ```
 
