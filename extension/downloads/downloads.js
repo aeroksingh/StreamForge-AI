@@ -7,24 +7,35 @@ let pollTimer = null
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
-  // Load jobs from storage
   const stored = await chrome.storage.local.get(null)
 
-  // Pick all jobId keys
+  // Active job bhi add karo
+  if (stored.activeJob) {
+    const jobId = stored.activeJob
+    if (!jobs[jobId]) {
+      jobs[jobId] = {
+        url:     stored[jobId]?.url || 'Active download',
+        quality: stored[jobId]?.quality || '',
+        status:  'downloading',
+        message: 'Fetching status...',
+        pct:     0,
+        fileUrl: null,
+        addedAt: stored[jobId]?.addedAt || Date.now()
+      }
+    }
+  }
+
+  // Baaki completed jobs
   Object.keys(stored).forEach(key => {
-    if (key.startsWith('job_') || key === 'activeJob') {
-      if (key === 'activeJob') return
-      // job entries stored as job_xxx: { url, addedAt }
-      if (stored[key] && stored[key].url) {
-        jobs[key] = {
-          url:     stored[key].url,
-          quality: stored[key].quality || '',
-          status:  'queued',
-          message: 'Fetching status...',
-          pct:     0,
-          fileUrl: null,
-          addedAt: stored[key].addedAt || Date.now()
-        }
+    if (stored[key]?.url && key !== 'activeJob' && !jobs[key]) {
+      jobs[key] = {
+        url:     stored[key].url,
+        quality: stored[key].quality || '',
+        status:  'queued',
+        message: 'Fetching status...',
+        pct:     0,
+        fileUrl: null,
+        addedAt: stored[key].addedAt || Date.now()
       }
     }
   })
