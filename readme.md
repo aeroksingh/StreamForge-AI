@@ -360,8 +360,4 @@ Add these once you've run the project locally — they cover the parts that are 
 
 ---
 
-## License
-
-MIT.
-
-Built by Ashutosh, Bhopal.
+Built by Ashutosh.
