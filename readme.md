@@ -10,6 +10,16 @@
 
 ---
 
+## Why I Built This
+
+There are already a dozen YouTube downloaders out there. I didn't need another one — I needed an excuse to build a real distributed system instead of one more CRUD app.
+
+So instead of writing a single script that calls yt-dlp and exits, I forced myself to build it the way an actual backend would be built: a job queue between two languages, a database that remembers job state, a WebSocket channel pushing live updates to a client, and a Chrome extension on the other end consuming all of it.
+
+Every piece exists because of a question I wanted answered for myself — how does YouTube actually serve a 4K video over HTTP? How do you keep a browser extension in sync with a job running in a completely different process and language? How does FFmpeg merge two separate streams without losing a single frame of sync? StreamForge AI is what came out of chasing those answers.
+
+---
+
 ## What is this?
 
 StreamForge AI is a production-grade YouTube downloader that works as a Chrome extension. Instead of a simple script, it's built as a proper distributed system — the kind of architecture you'd find in real-world backend engineering.
@@ -110,11 +120,13 @@ This project is a practical implementation of CN concepts:
 - ✅ Background tracking — badge on extension icon even when popup is closed
 - ✅ Chrome notifications on download complete
 - ✅ Video + audio separate streams merged via FFmpeg
+- ✅ **Downloads page** — one view inside the extension showing every job (active, completed, failed), backed by PostgreSQL
 - ✅ Job history stored in PostgreSQL
 - ✅ Redis job queue — non-blocking, async processing
 - ✅ Save As dialog — user picks download location
 - ✅ Quality selection — all available itags shown
 - ✅ Playlist detection
+- ✅ One-command local setup via `start.sh` / `stop.sh`
 
 ---
 
@@ -122,6 +134,8 @@ This project is a practical implementation of CN concepts:
 
 ```
 youtube-downloader/
+├── start.sh                        # One-command setup — Docker, Python service, worker, Spring Boot
+├── stop.sh                         # Stops all services cleanly
 ├── docker-compose.yml              # PostgreSQL + Redis
 │
 ├── python-service/                 # FastAPI microservice
@@ -161,7 +175,9 @@ youtube-downloader/
     ├── popup/
     │   ├── popup.html
     │   ├── popup.js                # Quality select, download, polling
-    │   └── popup.css
+    │   ├── popup.css
+    │   ├── downloads.html          # Downloads page — full job history view
+    │   └── downloads.js            # Fetches job list, renders status/progress
     ├── content/content.js          # YouTube page injection
     ├── background/background.js    # Badge + notifications
     └── icons/
@@ -171,7 +187,29 @@ youtube-downloader/
 
 ## Setup & Run
 
-### Prerequisites
+### Quick Start (recommended)
+
+```bash
+git clone https://github.com/aeroksingh/StreamForge-AI.git
+cd StreamForge-AI
+./start.sh
+```
+
+`start.sh` brings up Docker (PostgreSQL + Redis), launches the Python FastAPI service and the Redis worker, and starts Spring Boot — in order, waiting for each to be healthy before moving to the next.
+
+When you're done:
+
+```bash
+./stop.sh
+```
+
+This stops Spring Boot, the Python service, the worker, and tears down the Docker containers.
+
+Then load the extension: `chrome://extensions/` → enable Developer mode → Load unpacked → select the `extension/` folder → open any YouTube video and click the StreamForge icon.
+
+### Manual Setup (if you want to run each piece yourself)
+
+**Prerequisites**
 
 ```bash
 # Required
@@ -181,20 +219,13 @@ Java 21, Maven, Python 3.12, Docker, FFmpeg, Git
 sudo apt install openjdk-21-jdk maven python3 python3-pip ffmpeg docker.io -y
 ```
 
-### 1. Clone
-
-```bash
-git clone https://github.com/your-username/streamforge-ai.git
-cd streamforge-ai
-```
-
-### 2. Start Docker (PostgreSQL + Redis)
+**1. Start Docker (PostgreSQL + Redis)**
 
 ```bash
 sudo docker compose up -d
 ```
 
-### 3. Python Service
+**2. Python Service**
 
 ```bash
 cd python-service
@@ -204,7 +235,7 @@ pip install -r requirements.txt
 python3 -m uvicorn app.main:app --reload --port 8001
 ```
 
-### 4. Python Worker (new terminal)
+**3. Python Worker** (new terminal)
 
 ```bash
 cd python-service
@@ -212,14 +243,14 @@ source venv/bin/activate
 python3 redis_worker.py
 ```
 
-### 5. Spring Boot
+**4. Spring Boot**
 
 ```bash
 cd spring-backend/backend
 ./mvnw spring-boot:run
 ```
 
-### 6. Chrome Extension
+**5. Chrome Extension**
 
 ```
 1. Open Chrome → chrome://extensions/
@@ -294,7 +325,14 @@ app.websocket.allowed-origins=*
 
 ## Screenshots
 
-> Add screenshots here after running the project locally.
+Add these once you've run the project locally — they cover the parts that are hardest to explain in text:
+
+| Screenshot | What to capture |
+|---|---|
+| Popup — Quality Selection | The itag/quality list right after a YouTube URL is detected |
+| Live Progress | The popup mid-download — %, speed, ETA |
+| Downloads Page | The full job history view inside the extension |
+| Chrome Notification | The completion notification |
 
 ---
 
@@ -324,8 +362,6 @@ app.websocket.allowed-origins=*
 
 ## License
 
-MIT — use freely, credit appreciated.
+MIT.
 
----
-
-*Built by Ashutosh — learning distributed systems by building one.*
+Built by Ashutosh, Bhopal.
