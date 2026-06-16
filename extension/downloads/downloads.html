@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>StreamForge — Downloads</title>
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #fff;
+    color: #111;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 10;
+  }
+
+  .brand { font-size: 15px; font-weight: 700; color: #111; }
+  .brand span { color: #22c55e; }
+
+  .stats {
+    display: flex;
+    gap: 20px;
+    font-size: 11px;
+    color: #aaa;
+  }
+
+  .stat strong { color: #111; font-size: 13px; }
+
+  .btn-clear {
+    font-size: 11px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    color: #aaa;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-clear:hover { border-color: #ef4444; color: #ef4444; }
+
+  .container { max-width: 720px; margin: 0 auto; padding: 24px; }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 80px 20px;
+    color: #ccc;
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty p { font-size: 13px; }
+
+  /* Job card */
+  .job-card {
+    background: #fff;
+    border: 1.5px solid #eee;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: border-color .2s;
+  }
+
+  .job-card.downloading { border-color: #3b82f6; }
+  .job-card.merging     { border-color: #8b5cf6; }
+  .job-card.done        { border-color: #22c55e; }
+  .job-card.error       { border-color: #ef4444; }
+  .job-card.queued      { border-color: #f59e0b; }
+
+  .job-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 12px;
+  }
+
+  .job-url {
+    font-size: 11px;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 400px;
+  }
+
+  .job-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .badge-queued      { background: #fef3c7; color: #92400e; }
+  .badge-downloading { background: #dbeafe; color: #1e40af; }
+  .badge-merging     { background: #ede9fe; color: #5b21b6; }
+  .badge-done        { background: #dcfce7; color: #15803d; }
+  .badge-error       { background: #fee2e2; color: #991b1b; }
+
+  /* Progress */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .pct {
+    font-size: 22px;
+    font-weight: 800;
+    color: #111;
+    min-width: 52px;
+    letter-spacing: -.02em;
+  }
+
+  .progress-info { flex: 1; }
+
+  .bar-wrap { height: 3px; background: #f0f0f0; border-radius: 2px; margin-bottom: 4px; }
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width .4s ease;
+  }
+  .bar-fill.downloading { background: #3b82f6; }
+  .bar-fill.merging     { background: #8b5cf6; }
+  .bar-fill.done        { background: #22c55e; }
+  .bar-fill.queued      { background: #f59e0b; }
+  .bar-fill.error       { background: #ef4444; }
+
+  .progress-details {
+    display: flex;
+    gap: 12px;
+    font-size: 10px;
+    color: #aaa;
+  }
+
+  .progress-details span { color: #555; }
+
+  /* Actions */
+  .job-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+  .btn-save {
+    padding: 6px 14px;
+    background: #22c55e;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-save:hover { background: #16a34a; }
+
+  .btn-remove {
+    padding: 6px 14px;
+    background: transparent;
+    color: #aaa;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-remove:hover { border-color: #ef4444; color: #ef4444; }
+
+  .error-msg {
+    font-size: 11px;
+    color: #ef4444;
+    margin-top: 6px;
+    font-family: monospace;
+  }
+
+  /* Done checkmark */
+  .done-msg {
+    font-size: 12px;
+    color: #22c55e;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  /* Refresh indicator */
+  .refresh-info {
+    font-size: 10px;
+    color: #ddd;
+    text-align: center;
+    margin-top: 24px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Stream<span>Forge</span> AI</div>
+  <div class="stats">
+    <div><strong id="stat-active">0</strong> active</div>
+    <div><strong id="stat-done">0</strong> done</div>
+  </div>
+  <button class="btn-clear" onclick="clearCompleted()">Clear completed</button>
+</header>
+
+<div class="container">
+  <div class="empty hidden" id="empty">
+    <div class="empty-icon">📭</div>
+    <p>No downloads yet.</p>
+    <p style="margin-top:6px;font-size:11px;color:#ddd">Go to a YouTube video and click the extension.</p>
+  </div>
+
+  <div id="jobs-list"></div>
+
+  <div class="refresh-info">Auto-refreshes every 2 seconds</div>
+</div>
+
+<script src="downloads.js"></script>
+</body>
+</html>

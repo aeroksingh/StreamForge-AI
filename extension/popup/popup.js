@@ -6,8 +6,9 @@ let vItag = null, aItag = null, url = ''
 document.addEventListener('DOMContentLoaded', async () => {
   await getUrl()
   await checkHealth()
-  document.getElementById('btn-ex').onclick = doExtract
-  document.getElementById('btn-dl').onclick = doDownload
+  document.getElementById('btn-ex').onclick  = doExtract
+  document.getElementById('btn-dl').onclick  = doDownload
+  document.getElementById('btn-dls').onclick = openDownloads
 })
 
 async function getUrl() {
@@ -26,20 +27,16 @@ async function getUrl() {
 }
 
 async function checkHealth() {
-  let pythonOk = false
-  let springOk = false
-  try {
-    const r = await fetch(`${PYTHON}/health`)
-    const d = await r.json()
-    pythonOk = d.status === 'ok'
-  } catch {}
-  try {
-    const r = await fetch(`${SPRING}/api/health`)
-    springOk = r.ok
-  } catch {}
+  let pythonOk = false, springOk = false
+  try { const r = await fetch(`${PYTHON}/health`); const d = await r.json(); pythonOk = d.status === 'ok' } catch {}
+  try { const r = await fetch(`${SPRING}/api/health`); springOk = r.ok } catch {}
   const dot = document.getElementById('dot')
   dot.className = 'dot ' + (pythonOk && springOk ? 'up' : pythonOk ? 'warn' : 'down')
   dot.title = `Python: ${pythonOk ? '✓' : '✗'}  Spring: ${springOk ? '✓' : '✗'}`
+}
+
+function openDownloads() {
+  chrome.tabs.create({ url: chrome.runtime.getURL('downloads/downloads.html') })
 }
 
 async function doExtract() {
@@ -133,8 +130,20 @@ async function doDownload() {
 
     const d = await r.json()
     const jobId = d.jobId
-    chrome.storage.local.set({ activeJob: jobId })
+
+    // Save job to storage so Downloads page can read it
+    chrome.storage.local.set({
+      [jobId]: {
+        url:     url,
+        quality: qualityLabel,
+        addedAt: Date.now()
+      },
+      activeJob: jobId
+    })
+
+    // Tell background to track badge
     chrome.runtime.sendMessage({ type: 'TRACK_JOB', jobId })
+
     pollSpring(jobId)
 
   } catch (e) {
@@ -144,9 +153,9 @@ async function doDownload() {
 
 function pollSpring(jobId) {
   const pctMap = {
-    pending: 5, queued: 10, extracting: 15,
-    downloading: 55, merging: 85, completed: 100,
-    failed: 0, error: 0,
+    pending:5, queued:10, extracting:15,
+    downloading:55, merging:85, completed:100,
+    failed:0, error:0,
   }
 
   const t = setInterval(async () => {
@@ -173,19 +182,11 @@ function pollSpring(jobId) {
         updateProgress('done', '100%', 'complete!', '', 100, 'Done')
 
         const fileUrl = `${PYTHON}/files/${jobId}_final.mp4`
-        chrome.downloads.download({
-          url:      fileUrl,
-          filename: `streamforge_${jobId}.mp4`,
-          saveAs:   true
-        })
+        chrome.downloads.download({ url: fileUrl, filename: `streamforge_${jobId}.mp4`, saveAs: true })
 
         document.getElementById('dlwrap').innerHTML = `
           <div class="msg-done">✓ Download complete</div>
-          <button class="dl" onclick="chrome.downloads.download({
-            url: '${fileUrl}',
-            filename: 'streamforge_${jobId}.mp4',
-            saveAs: true
-          })">↓ Save Again</button>`
+          <button class="dl" onclick="openDownloads()">📥 View All Downloads</button>`
 
       } else if (status === 'failed' || status === 'error') {
         clearInterval(t)
@@ -199,8 +200,7 @@ function pollSpring(jobId) {
 
 function updateProgress(status, pct, eta, speed, pctNum, stream = '') {
   document.getElementById('prog-label').textContent =
-    status === 'merging'    ? 'Merging'    :
-    status === 'done'       ? 'Complete'   :
+    status === 'merging' ? 'Merging' : status === 'done' ? 'Complete' :
     status === 'extracting' ? 'Extracting' : 'Downloading'
   document.getElementById('prog-pct').textContent    = pct
   document.getElementById('prog-eta').textContent    = eta ? `ETA ${eta}` : ''
@@ -209,17 +209,8 @@ function updateProgress(status, pct, eta, speed, pctNum, stream = '') {
   document.getElementById('bar').style.width         = pctNum + '%'
 }
 
-function btn(id, txt, dis) {
-  const el = document.getElementById(id)
-  el.textContent = txt
-  el.disabled = dis
-}
-
+function btn(id, txt, dis) { const el = document.getElementById(id); el.textContent = txt; el.disabled = dis }
 function show(id) { document.getElementById(id).classList.remove('hidden') }
 function hide(id) { document.getElementById(id).classList.add('hidden') }
-function showErr(m) {
-  const e = document.getElementById('err')
-  e.textContent = m
-  e.classList.remove('hidden')
-}
-function hideErr() { document.getElementById('err').classList.add('hidden') }
+function showErr(m) { const e = document.getElementById('err'); e.textContent = m; e.classList.remove('hidden') }
+function hideErr()  { document.getElementById('err').classList.add('hidden') }
