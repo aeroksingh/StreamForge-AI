@@ -40,6 +40,14 @@ async function init() {
     }
   })
 
+  document.getElementById('jobs-list').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-action]')
+    if (!b) return
+    const jobId = b.dataset.job
+    if (b.dataset.action === 'remove') removeJob(jobId)
+    if (b.dataset.action === 'save')   saveFile(jobId, jobs[jobId]?.fileUrl)
+  })
+
   render()
   startPolling()
 }
@@ -140,10 +148,10 @@ function jobCard(jobId, job) {
                      pct ? pct.toFixed(1) + '%' : '...'
 
   const actions = status === 'done' ? `
-    <button class="btn-save" onclick="saveFile('${jobId}', '${job.fileUrl}')">↓ Save File</button>
-    <button class="btn-remove" onclick="removeJob('${jobId}')">Remove</button>
+    <button class="btn-save" data-action="save" data-job="${jobId}">↓ Save File</button>
+    <button class="btn-remove" data-action="remove" data-job="${jobId}">Remove</button>
   ` : status === 'error' ? `
-    <button class="btn-remove" onclick="removeJob('${jobId}')">Remove</button>
+    <button class="btn-remove" data-action="remove" data-job="${jobId}">Remove</button>
   ` : `
     <button class="btn-remove" style="opacity:.4;cursor:default">Downloading...</button>
   `
